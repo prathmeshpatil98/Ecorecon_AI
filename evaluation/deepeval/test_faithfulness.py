@@ -9,7 +9,7 @@ import pytest
 from deepeval import assert_test
 from deepeval.metrics import FaithfulnessMetric
 from deepeval.test_case import LLMTestCase
-
+from evaluation.deepeval.conftest import OllamaLLM
 # We set a very strict threshold for compliance intelligence
 FAITHFULNESS_THRESHOLD = 1.0
 
@@ -20,12 +20,13 @@ async def test_faithfulness_valid_answer():
     Test that a highly accurate, grounded response passes faithfulness evaluation.
     """
     input_question = "What is the variance threshold for flexible plastic?"
-    actual_output = "The variance threshold for flexible plastic is 5% [pwm_rules.md - Section 2]."
+    actual_output = "The variance threshold for flexible plastic is more than 5% [pwm_rules.md - Section 2]."
     retrieval_context = [
         "A variance of more than 5% (flexible or rigid plastic) is considered a material mismatch and flags the producer for compliance review."
     ]
 
-    metric = FaithfulnessMetric(threshold=FAITHFULNESS_THRESHOLD)
+    ollama_llm = OllamaLLM(model_name="gpt-oss:20b-cloud")
+    metric = FaithfulnessMetric(threshold=FAITHFULNESS_THRESHOLD, model=ollama_llm)
     test_case = LLMTestCase(
         input=input_question,
         actual_output=actual_output,
@@ -51,7 +52,8 @@ async def test_faithfulness_detects_fabrication():
         "A variance of more than 5% (flexible or rigid plastic) is considered a material mismatch."
     ]
 
-    metric = FaithfulnessMetric(threshold=FAITHFULNESS_THRESHOLD)
+    ollama_llm = OllamaLLM(model_name="gpt-oss:20b-cloud")
+    metric = FaithfulnessMetric(threshold=FAITHFULNESS_THRESHOLD, model=ollama_llm)
     test_case = LLMTestCase(
         input=input_question,
         actual_output=actual_output,

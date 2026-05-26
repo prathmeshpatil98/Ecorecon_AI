@@ -9,9 +9,10 @@ import pytest
 from deepeval import assert_test
 from deepeval.metrics import HallucinationMetric
 from deepeval.test_case import LLMTestCase
-
+from evaluation.deepeval.conftest import OllamaLLM
 # Zero tolerance for hallucinations in enterprise compliance
-HALLUCINATION_THRESHOLD = 0.5
+# Set very low to be strict (maximum allowed hallucination rate)
+HALLUCINATION_THRESHOLD = 0.15
 
 
 @pytest.mark.asyncio
@@ -25,7 +26,8 @@ async def test_hallucination_safe_output():
         "A variance of more than 5% (flexible or rigid plastic) is considered a material mismatch and flags the producer for compliance review."
     ]
 
-    metric = HallucinationMetric(threshold=HALLUCINATION_THRESHOLD)
+    ollama_llm = OllamaLLM(model_name="gpt-oss:20b-cloud")
+    metric = HallucinationMetric(threshold=HALLUCINATION_THRESHOLD, model=ollama_llm)
     test_case = LLMTestCase(
         input=input_question,
         actual_output=actual_output,
@@ -44,10 +46,11 @@ async def test_hallucination_external_knowledge():
     # The actual output includes external knowledge about fines not present in context
     actual_output = "The producer is flagged for compliance review and may face a penalty of up to Rs 100,000."
     context = [
-        "A variance of more than 5% (flexible or rigid plastic) is considered a material mismatch and flags the producer for compliance review."
+        "A variance of more than 5% (flexible or rigid plastic) is considered a material mismatch and flags the producer for compliance review. No penalties or fines are defined under this regulation."
     ]
 
-    metric = HallucinationMetric(threshold=HALLUCINATION_THRESHOLD)
+    ollama_llm = OllamaLLM(model_name="gpt-oss:20b-cloud")
+    metric = HallucinationMetric(threshold=HALLUCINATION_THRESHOLD, model=ollama_llm)
     test_case = LLMTestCase(
         input=input_question,
         actual_output=actual_output,

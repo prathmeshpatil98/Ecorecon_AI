@@ -30,7 +30,7 @@ class LLMService:
         # Only initialize if the key is present to avoid immediate exceptions
         if self._settings.groq_api_key:
             api_key = self._settings.groq_api_key
-            model = "meta-llama/llama-4-scout-17b-16e-instruct"
+            model = self._settings.groq_model
             logger.info(f"Using Groq API with ChatGroq and model: {model}")
             
             self._llm = ChatGroq(

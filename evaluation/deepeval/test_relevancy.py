@@ -9,7 +9,7 @@ import pytest
 from deepeval import assert_test
 from deepeval.metrics import AnswerRelevancyMetric
 from deepeval.test_case import LLMTestCase
-
+from evaluation.deepeval.conftest import OllamaLLM
 RELEVANCY_THRESHOLD = 0.7
 
 
@@ -24,7 +24,8 @@ async def test_answer_relevancy_high():
         "A variance of more than 5% (flexible or rigid plastic) is considered a material mismatch."
     ]
 
-    metric = AnswerRelevancyMetric(threshold=RELEVANCY_THRESHOLD)
+    ollama_llm = OllamaLLM(model_name="gpt-oss:20b-cloud")
+    metric = AnswerRelevancyMetric(threshold=RELEVANCY_THRESHOLD, model=ollama_llm)
     test_case = LLMTestCase(
         input=input_question,
         actual_output=actual_output,
@@ -45,7 +46,8 @@ async def test_answer_relevancy_evasive():
         "A variance of more than 5% (flexible or rigid plastic) is considered a material mismatch."
     ]
 
-    metric = AnswerRelevancyMetric(threshold=RELEVANCY_THRESHOLD)
+    ollama_llm = OllamaLLM(model_name="gpt-oss:20b-cloud")
+    metric = AnswerRelevancyMetric(threshold=RELEVANCY_THRESHOLD, model=ollama_llm)
     test_case = LLMTestCase(
         input=input_question,
         actual_output=actual_output,

@@ -61,12 +61,10 @@ class Settings(BaseSettings):
     # Groq LLM
     # ------------------------------------------------------------------
     groq_api_key: str = Field(
-        default="",
-        description="Groq API key — required for /summary and /ask endpoints.",
+        description="Groq API key — REQUIRED in .env for /summary and /ask endpoints.",
     )
     groq_model: str = Field(
-        default="meta-llama/llama-4-scout-17b-16e-instruct",
-        description="Groq model identifier.",
+        description="Groq model identifier — REQUIRED in .env file.",
     )
     groq_temperature: float = Field(default=0.1, ge=0.0, le=2.0)
     groq_max_tokens: int = Field(default=1024, ge=64)
@@ -74,8 +72,12 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------
     # Ollama Embeddings
     # ------------------------------------------------------------------
-    ollama_base_url: str = Field(default="http://localhost:11434")
-    ollama_embed_model: str = Field(default="nomic-embed-text")
+    ollama_base_url: str = Field(
+        description="Ollama base URL — REQUIRED in .env file.",
+    )
+    ollama_embed_model: str = Field(
+        description="Ollama embedding model identifier — REQUIRED in .env file.",
+    )
 
     # ------------------------------------------------------------------
     # ChromaDB
@@ -96,8 +98,14 @@ class Settings(BaseSettings):
         ),
     )
     rag_top_k: int = Field(default=5, ge=1)
-    rag_chunk_size: int = Field(default=500, ge=50)
-    rag_chunk_overlap: int = Field(default=50, ge=0)
+    rag_chunk_size: int = Field(
+        ge=50,
+        description="RAG chunk size — REQUIRED in .env file.",
+    )
+    rag_chunk_overlap: int = Field(
+        ge=0,
+        description="RAG chunk overlap — REQUIRED in .env file.",
+    )
 
     # ------------------------------------------------------------------
     # Logging
@@ -126,21 +134,6 @@ class Settings(BaseSettings):
         default="./data/compliance_docs",
         description="Directory containing EPR compliance markdown documents for ingestion.",
     )
-
-    @field_validator("groq_api_key")
-    @classmethod
-    def warn_if_groq_key_missing(cls, v: str) -> str:
-        """
-        Soft-warn at startup if the Groq key is absent.
-        The /submit endpoint works without it; /summary and /ask will fail at runtime.
-        """
-        if not v:
-            import warnings
-            warnings.warn(
-                "GROQ_API_KEY is not set. The /summary and /ask endpoints will be unavailable.",
-                stacklevel=2,
-            )
-        return v
 
     @property
     def is_production(self) -> bool:

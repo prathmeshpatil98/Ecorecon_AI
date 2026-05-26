@@ -9,7 +9,7 @@ import pytest
 from deepeval import assert_test
 from deepeval.metrics import ContextualPrecisionMetric
 from deepeval.test_case import LLMTestCase
-
+from evaluation.deepeval.conftest import OllamaLLM
 PRECISION_THRESHOLD = 0.5
 
 
@@ -30,7 +30,8 @@ async def test_contextual_precision_high():
     # Expected output based strictly on context
     expected_output = "Producers are required to maintain a verifiable paper trail for their ERP procurement systems."
 
-    metric = ContextualPrecisionMetric(threshold=PRECISION_THRESHOLD)
+    ollama_llm = OllamaLLM(model_name="gpt-oss:20b-cloud")
+    metric = ContextualPrecisionMetric(threshold=PRECISION_THRESHOLD, model=ollama_llm)
     
     test_case = LLMTestCase(
         input=input_question,

@@ -96,7 +96,69 @@ def render_ingestion_tab(api_client: APIClient):
                         st.success(f"✓ Plastic Declaration recorded successfully! Record UUID: {resp.get('record_id')}")
                         st.session_state.active_producer = producer_id
                         st.session_state.active_month = month
-                        st.json(resp)
+                        # Render a premium glassmorphism digital receipt card instead of raw JSON
+                        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+                        categories_list = resp.get("categories", [])
+                        
+                        # Generate HTML for a clean receipt breakdown
+                        categories_rows = "".join(
+                            f"""
+                            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                <td style="padding: 10px; font-weight: 500; color: #E2E8F0;">
+                                    {cat.get('category', '').replace('_', ' ').title()}
+                                </td>
+                                <td style="padding: 10px; text-align: right; color: #34D399; font-weight: 600;">
+                                    {cat.get('declared_quantity_kg', 0.0):,.1f} kg
+                                </td>
+                            </tr>
+                            """
+                            for cat in categories_list
+                        )
+                        
+                        receipt_html = f"""
+                        <div class="glass-card active-glow" style="border-left: 4px solid #10B981 !important; padding: 20px; border-radius: 8px; margin-top: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; margin-bottom: 15px;">
+                                <h5 style="margin: 0; color: #10B981; font-weight: 600; font-size: 15px;">📄 EPR Obligation Digital Receipt</h5>
+                                <span style="font-size: 11px; background: rgba(16, 185, 129, 0.15); color: #34D399; padding: 3px 8px; border-radius: 12px; font-weight: 600; border: 1px solid rgba(52, 211, 153, 0.3);">
+                                    Active Revision: {resp.get('revision', 1)}
+                                </span>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px; color: #94A3B8; margin-bottom: 18px;">
+                                <div>
+                                    <strong style="color: #CBD5E1;">Producer ID:</strong> {resp.get('producer_id')}
+                                </div>
+                                <div>
+                                    <strong style="color: #CBD5E1;">Filing Period:</strong> {resp.get('month')}
+                                </div>
+                                <div>
+                                    <strong style="color: #CBD5E1;">Record UUID:</strong> <code style="font-size: 11px; color: #60A5FA;">{resp.get('record_id')}</code>
+                                </div>
+                                <div>
+                                    <strong style="color: #CBD5E1;">Timestamp:</strong> {resp.get('submitted_at', '').replace('T', ' ')[:19]}
+                                </div>
+                            </div>
+                            
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                <thead>
+                                    <tr style="border-bottom: 1.5px solid rgba(255, 255, 255, 0.1);">
+                                        <th style="padding: 8px 10px; text-align: left; color: #94A3B8; font-weight: 500;">Plastic Type</th>
+                                        <th style="padding: 8px 10px; text-align: right; color: #94A3B8; font-weight: 500;">Declared Weight</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {categories_rows}
+                                    <tr style="border-top: 1.5px solid rgba(255, 255, 255, 0.15); font-weight: 700; font-size: 14px;">
+                                        <td style="padding: 12px 10px 0 10px; color: #F1F5F9;">Total Obligation</td>
+                                        <td style="padding: 12px 10px 0 10px; text-align: right; color: #60A5FA;">
+                                            {resp.get('total_declared_kg', 0.0):,.1f} kg
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        """
+                        st.markdown(receipt_html, unsafe_allow_html=True)
                     elif status == 409:
                         st.warning(f"⚠️ Ingestion Conflict: {resp.get('message', 'Record already exists.')}")
                     elif status == 422:
