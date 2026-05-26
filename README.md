@@ -220,18 +220,29 @@ ecorecon_ai/
 
 ## ⚙️ Setup & Installation
 
-### Prerequisites
+We support two ways of running the EcoRecon AI platform:
+1. **Option A: Native Local Setup** (uses **Astral `uv`** for lightning-fast package resolution)
+2. **Option B: Containerized Setup** (uses **Docker Compose** to run the complete multi-container stack)
+
+---
+
+### Option A: Native Local Setup (via uv)
+
+Astral `uv` is an extremely fast Python package resolver and installer designed as a high-performance alternative to `pip` and `poetry` with sub-millisecond execution times.
+
+#### Prerequisites
 - **Python 3.10+**
 - **uv** package manager ([install guide](https://docs.astral.sh/uv/getting-started/installation/))
-- **Ollama** running locally ([download](https://ollama.ai)) with `nomic-embed-text` model pulled
+- **Ollama** running locally ([download](https://ollama.ai)) with the `nomic-embed-text` model pulled
 - **Groq API Key** (free at [console.groq.com](https://console.groq.com))
 
-### Step 1: Install Dependencies
+#### Step 1: Install Dependencies
+Initialize the virtual environment and install all packages (including development and testing dependencies) in milliseconds:
 ```bash
 uv sync --all-extras
 ```
 
-### Step 2: Configure Environment
+#### Step 2: Configure Environment
 Create or edit the `.env` file in the project root:
 ```env
 APP_ENV=development
@@ -242,34 +253,80 @@ OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_EMBED_MODEL=nomic-embed-text
 ```
 
-### Step 3: Pull the Embedding Model
+#### Step 3: Pull the Embedding Model
+Ensure Ollama is running and download the local text embeddings model:
 ```bash
 ollama pull nomic-embed-text
 ```
 
-### Step 4: Initialize the Database
+#### Step 4: Initialize the Database
+Run the reset script to create a fresh SQLite `ecorecon.db` file:
 ```bash
 uv run python scripts/reset_db.py
 ```
 
-### Step 5: Ingest Compliance Documents into Vector Store
+#### Step 5: Ingest Compliance Documents
+Build the persistent semantic index inside ChromaDB:
 ```bash
 uv run python scripts/ingest_docs.py
 ```
 
-### Step 6: Start the Backend (Terminal 1)
+#### Step 6: Start the Backend (Terminal 1)
 ```bash
 uv run uvicorn app.main:app --reload
 ```
-Backend will be available at: **http://localhost:8000** (Swagger docs at `/docs`)
+The FastAPI backend will be available at: **http://localhost:8000** (Swagger docs at `/docs`)
 
-### Step 7: Start the Frontend Dashboard (Terminal 2)
+#### Step 7: Start the Frontend Dashboard (Terminal 2)
 ```bash
 uv run streamlit run frontend/main.py
 ```
-Dashboard will be available at: **http://localhost:8501**
+The Streamlit dashboard will be available at: **http://localhost:8501**
 
 ---
+
+### Option B: Containerized Setup (via Docker Compose)
+
+Docker Compose orchestrates the entire multi-service stack: the FastAPI API, the Streamlit frontend, and a local Ollama embedding database linked together over an isolated internal bridge network (`ecorecon-net`).
+
+Both container images are built using **Astral `uv`** internally for extremely fast, reliable, and cached multi-stage builds.
+
+#### Prerequisites
+- **Docker Desktop** installed and running on your machine
+- **Groq API Key** (free at [console.groq.com](https://console.groq.com))
+
+#### Step 1: Configure Environment
+Ensure your `.env` file contains your Groq key:
+```env
+GROQ_API_KEY=gsk_your-api-key-here
+```
+
+#### Step 2: Build and Run the Stack
+Run the compose setup in detached mode:
+```bash
+docker compose up -d --build
+```
+This command automatically:
+1. Spins up the local `ollama` database and pulls `nomic-embed-text` embeddings.
+2. Builds the `ecorecon-api` image and starts the server.
+3. Builds the `ecorecon-frontend` Streamlit dashboard, initiating it only when the API backend becomes fully healthy.
+
+#### Step 3: Ingest Compliance Documents
+Build the vector index in ChromaDB inside the active API container:
+```bash
+docker compose exec ecorecon-api python scripts/ingest_docs.py
+```
+
+#### Step 4: Access the Platform
+- **Streamlit Dashboard**: 👉 [http://localhost:8501](http://localhost:8501)
+- **FastAPI OpenAPI Docs**: 👉 [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Local Ollama Port**: 👉 [http://localhost:11434](http://localhost:11434)
+
+#### Step 5: Shut Down the Stack
+To safely stop and remove the containers:
+```bash
+docker compose down
+```
 
 ## 📖 API Endpoints
 

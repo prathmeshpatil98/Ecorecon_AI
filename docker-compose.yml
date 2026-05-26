@@ -24,13 +24,49 @@ services:
       APP_ENV: ${APP_ENV:-development}
       APP_HOST: "0.0.0.0"
       APP_PORT: "8000"
+      # Route LLM/embedding vectorizer requests through Ollama service container
+      OLLAMA_BASE_URL: "http://ollama:11434"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 15s
+    depends_on:
+      - ollama
+    networks:
+      - ecorecon-net
+
+  # ─────────────────────────────────────────────
+  # EcoRecon AI — Streamlit Frontend Dashboard
+  # ─────────────────────────────────────────────
+  ecorecon-frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: ecorecon-frontend
+    ports:
+      - "8501:8501"
+    volumes:
+      # Mount frontend directories for live updates if in development
+      - ./frontend:/app/frontend
+      - ./.streamlit:/app/.streamlit
+    env_file:
+      - .env
+    environment:
+      # Point to backend FastAPI service container on internal bridge network
+      BACKEND_API_URL: "http://ecorecon-api:8000/api/v1"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    depends_on:
+      ecorecon-api:
+        condition: service_healthy
     networks:
       - ecorecon-net
 

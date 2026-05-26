@@ -13,7 +13,10 @@ class APIClient:
     Handles network safety, exceptions, and validation message mapping.
     """
 
-    def __init__(self, base_url: str = "http://127.0.0.1:8000/api/v1"):
+    def __init__(self, base_url: Optional[str] = None):
+        import os
+        if base_url is None:
+            base_url = os.getenv("BACKEND_API_URL", "http://127.0.0.1:8000/api/v1")
         self.base_url = base_url
 
     def check_connection(self) -> bool:
