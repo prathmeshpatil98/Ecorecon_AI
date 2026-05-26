@@ -18,7 +18,7 @@ COPY pyproject.toml .
 
 # Install dependencies into an isolated venv
 RUN uv venv /opt/venv && \
-    uv pip install --python /opt/venv/bin/python -e ".[dev]"
+    uv pip install --python /opt/venv/bin/python -r pyproject.toml --extra dev
 
 
 # ── Stage 2: Runtime ──────────────────────────

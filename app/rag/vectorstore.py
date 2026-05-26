@@ -28,8 +28,8 @@ class VectorStoreManager:
         
         # Initialize Ollama embeddings with the specified Nomic model
         self.embeddings = OllamaEmbeddings(
-            model="nomic-embed-text",
-            base_url="http://localhost:11434" # Default Ollama port
+            model=self.settings.ollama_embed_model,
+            base_url=self.settings.ollama_base_url,
         )
         
         # Initialize Chroma vector store
