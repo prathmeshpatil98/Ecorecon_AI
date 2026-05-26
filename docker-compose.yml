@@ -1,0 +1,63 @@
+services:
+  # ─────────────────────────────────────────────
+  # EcoRecon AI — FastAPI Application
+  # ─────────────────────────────────────────────
+  ecorecon-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: ecorecon-api
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      # Persist SQLite database across container restarts
+      - ./ecorecon.db:/app/ecorecon.db
+      # Persist ChromaDB vector store
+      - ./data/chroma_db:/app/data/chroma_db
+      # Mount compliance docs for ingestion scripts
+      - ./data/compliance_docs:/app/data/compliance_docs
+      # Mount ERP feed
+      - ./data/erp:/app/data/erp
+    env_file:
+      - .env
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_HOST: "0.0.0.0"
+      APP_PORT: "8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - ecorecon-net
+
+  # ─────────────────────────────────────────────
+  # Ollama — Local Embedding Service
+  # ─────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ecorecon-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - ecorecon-net
+    # Pull the embedding model on first startup
+    entrypoint: >
+      sh -c "ollama serve & sleep 5 && ollama pull nomic-embed-text && wait"
+
+# ─────────────────────────────────────────────
+# Volumes & Networks
+# ─────────────────────────────────────────────
+volumes:
+  ollama-models:
+    driver: local
+
+networks:
+  ecorecon-net:
+    driver: bridge
